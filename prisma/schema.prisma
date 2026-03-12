@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum HabitStatus {
+  GOOD
+  WARNING
+  GREAT
+}
+
+enum PlanName {
+  FREE
+  PRO
+}
+
+model User {
+  id               String            @id @default(cuid())
+  name             String?
+  email            String            @unique
+  passwordHash     String?
+  emailVerified    DateTime?
+  image            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  accounts         Account[]
+  sessions         Session[]
+  tasks            Task[]
+  goals            Goal[]
+  habits           Habit[]
+  journals         Journal[]
+  subscriptions    Subscription[]
+  stripeCustomerId String?           @unique
+  preferences      UserPreference?
+  aiReviews        AIReview[]
+  onboarding       UserOnboarding?
+  stateSnapshots   AIStateSnapshot[]
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  category    String
+  priority    Priority  @default(MEDIUM)
+  dueDate     DateTime?
+  done        Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Goal {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  area        String
+  progress    Int       @default(0)
+  targetDate  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Habit {
+  id        String      @id @default(cuid())
+  title     String
+  frequency String      @default("daily")
+  streak    Int         @default(0)
+  status    HabitStatus @default(GOOD)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Journal {
+  id        String   @id @default(cuid())
+  title     String?
+  content   String
+  mood      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  status               String
+  plan                 PlanName  @default(FREE)
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model UserPreference {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planningMode String   @default("balanced")
+  tone         String   @default("direct")
+  workStyle    String   @default("focused")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AIReview {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  summary     String
+  mainBlocker String?
+  bestPattern String?
+  nextAdvice  String?
+  createdAt   DateTime @default(now())
+}
+
+model UserOnboarding {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  primaryGoal      String
+  workPace         String
+  supportStyle     String
+  overloadTendency String
+  focusArea        String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model AIStateSnapshot {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snapshotType  String
+  summary       String
+  executiveMode String?
+  energyLevel   String?
+  burnoutRisk   String?
+  payload       String
+  createdAt     DateTime @default(now())
+}
