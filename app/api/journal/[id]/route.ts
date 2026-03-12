@@ -1,12 +1,46 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { requireUser } from '@/lib/session';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const authResult = await requireUser();
-  if ('error' in authResult) return authResult.error;
-  const existing = await db.journal.findFirst({ where: { id: params.id, userId: authResult.userId } });
-  if (!existing) return NextResponse.json({ error: 'Journal zapis nije pronađen.' }, { status: 404 });
-  await db.journal.delete({ where: { id: params.id } });
-  return NextResponse.json({ success: true });
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+
+    const journal = await db.journal.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!journal) {
+      return NextResponse.json({ error: "Journal entry not found" }, { status: 404 });
+    }
+
+    await db.journal.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/journal/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to delete journal entry",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }

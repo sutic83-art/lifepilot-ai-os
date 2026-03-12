@@ -1,30 +1,95 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { requireUser } from '@/lib/session';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const authResult = await requireUser();
-  if ('error' in authResult) return authResult.error;
-  const existing = await db.habit.findFirst({ where: { id: params.id, userId: authResult.userId } });
-  if (!existing) return NextResponse.json({ error: 'Navika nije pronađena.' }, { status: 404 });
-  const json = await request.json();
-  const item = await db.habit.update({
-    where: { id: params.id },
-    data: {
-      title: json.title ?? existing.title,
-      frequency: json.frequency ?? existing.frequency,
-      streak: typeof json.streak === 'number' ? json.streak : existing.streak,
-      status: json.status ?? existing.status
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-  });
-  return NextResponse.json(item);
+
+    const { id } = await context.params;
+    const body = await request.json();
+
+    const habit = await db.habit.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!habit) {
+      return NextResponse.json({ error: "Habit not found" }, { status: 404 });
+    }
+
+    const updatedHabit = await db.habit.update({
+      where: { id },
+      data: {
+        title: typeof body?.title === "string" ? body.title : habit.title,
+        frequency:
+          typeof body?.frequency === "string" ? body.frequency : habit.frequency,
+        streak:
+          typeof body?.streak === "number" ? body.streak : habit.streak,
+        status:
+          typeof body?.status === "string" ? body.status : habit.status,
+      },
+    });
+
+    return NextResponse.json(updatedHabit);
+  } catch (error) {
+    console.error("PATCH /api/habits/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to update habit",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const authResult = await requireUser();
-  if ('error' in authResult) return authResult.error;
-  const existing = await db.habit.findFirst({ where: { id: params.id, userId: authResult.userId } });
-  if (!existing) return NextResponse.json({ error: 'Navika nije pronađena.' }, { status: 404 });
-  await db.habit.delete({ where: { id: params.id } });
-  return NextResponse.json({ success: true });
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+
+    const habit = await db.habit.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!habit) {
+      return NextResponse.json({ error: "Habit not found" }, { status: 404 });
+    }
+
+    await db.habit.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/habits/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to delete habit",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }

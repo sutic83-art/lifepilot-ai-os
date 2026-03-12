@@ -1,36 +1,99 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { requireUser } from '@/lib/session';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const authResult = await requireUser();
-  if ('error' in authResult) return authResult.error;
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
 
-  const existing = await db.task.findFirst({ where: { id: params.id, userId: authResult.userId } });
-  if (!existing) return NextResponse.json({ error: 'Task nije pronađen.' }, { status: 404 });
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    const session = await auth();
 
-  const json = await request.json().catch(() => ({}));
-  const item = await db.task.update({
-    where: { id: params.id },
-    data: {
-      done: typeof json.done === 'boolean' ? json.done : !existing.done,
-      title: json.title ?? existing.title,
-      description: json.description ?? existing.description,
-      category: json.category ?? existing.category,
-      priority: json.priority ?? existing.priority
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-  });
 
-  return NextResponse.json(item);
+    const { id } = await context.params;
+    const body = await request.json();
+
+    const task = await db.task.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    const updatedTask = await db.task.update({
+      where: { id },
+      data: {
+        title: typeof body?.title === "string" ? body.title : task.title,
+        description:
+          typeof body?.description === "string"
+            ? body.description
+            : task.description,
+        category:
+          typeof body?.category === "string" ? body.category : task.category,
+        priority:
+          typeof body?.priority === "string" ? body.priority : task.priority,
+        dueDate: body?.dueDate ? new Date(body.dueDate) : task.dueDate,
+        done: typeof body?.done === "boolean" ? body.done : task.done,
+      },
+    });
+
+    return NextResponse.json(updatedTask);
+  } catch (error) {
+    console.error("PATCH /api/tasks/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to update task",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const authResult = await requireUser();
-  if ('error' in authResult) return authResult.error;
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  try {
+    const session = await auth();
 
-  const existing = await db.task.findFirst({ where: { id: params.id, userId: authResult.userId } });
-  if (!existing) return NextResponse.json({ error: 'Task nije pronađen.' }, { status: 404 });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
 
-  await db.task.delete({ where: { id: params.id } });
-  return NextResponse.json({ success: true });
+    const { id } = await context.params;
+
+    const task = await db.task.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    await db.task.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/tasks/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to delete task",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }

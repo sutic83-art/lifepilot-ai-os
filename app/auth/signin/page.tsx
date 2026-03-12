@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 export default function SignInPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackUrl = params.get('callbackUrl') || '/dashboard';
+  const callbackUrl = params?.get("callbackUrl") || "/dashboard";
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 

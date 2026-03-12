@@ -1,30 +1,97 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { requireUser } from '@/lib/session';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const authResult = await requireUser();
-  if ('error' in authResult) return authResult.error;
-  const existing = await db.goal.findFirst({ where: { id: params.id, userId: authResult.userId } });
-  if (!existing) return NextResponse.json({ error: 'Cilj nije pronađen.' }, { status: 404 });
-  const json = await request.json();
-  const item = await db.goal.update({
-    where: { id: params.id },
-    data: {
-      title: json.title ?? existing.title,
-      description: json.description ?? existing.description,
-      area: json.area ?? existing.area,
-      progress: typeof json.progress === 'number' ? json.progress : existing.progress
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-  });
-  return NextResponse.json(item);
+
+    const { id } = await context.params;
+    const body = await request.json();
+
+    const goal = await db.goal.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!goal) {
+      return NextResponse.json({ error: "Goal not found" }, { status: 404 });
+    }
+
+    const updatedGoal = await db.goal.update({
+      where: { id },
+      data: {
+        title: typeof body?.title === "string" ? body.title : goal.title,
+        description:
+          typeof body?.description === "string"
+            ? body.description
+            : goal.description,
+        area: typeof body?.area === "string" ? body.area : goal.area,
+        progress:
+          typeof body?.progress === "number" ? body.progress : goal.progress,
+        targetDate: body?.targetDate ? new Date(body.targetDate) : goal.targetDate,
+      },
+    });
+
+    return NextResponse.json(updatedGoal);
+  } catch (error) {
+    console.error("PATCH /api/goals/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to update goal",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const authResult = await requireUser();
-  if ('error' in authResult) return authResult.error;
-  const existing = await db.goal.findFirst({ where: { id: params.id, userId: authResult.userId } });
-  if (!existing) return NextResponse.json({ error: 'Cilj nije pronađen.' }, { status: 404 });
-  await db.goal.delete({ where: { id: params.id } });
-  return NextResponse.json({ success: true });
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+
+    const goal = await db.goal.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!goal) {
+      return NextResponse.json({ error: "Goal not found" }, { status: 404 });
+    }
+
+    await db.goal.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/goals/[id] error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Failed to delete goal",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }
