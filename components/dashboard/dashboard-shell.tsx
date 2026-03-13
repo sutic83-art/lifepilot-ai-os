@@ -8,14 +8,12 @@ type DashboardShellProps = {
 };
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Today" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/tasks", label: "Tasks" },
   { href: "/dashboard/goals", label: "Goals" },
   { href: "/dashboard/habits", label: "Habits" },
+  { href: "/dashboard/coach", label: "Coach" },
   { href: "/dashboard/weekly-review", label: "Weekly Review" },
-  { href: "/dashboard/goal-alignment", label: "Goal Alignment" },
-  { href: "/dashboard/time-allocation", label: "Time Allocation" },
-  { href: "/dashboard/founder-reporting", label: "Founder Reporting" },
 ];
 
 export function DashboardShell({
