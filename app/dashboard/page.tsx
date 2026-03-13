@@ -35,6 +35,15 @@ type OrchestratorResult = {
   reasoning: string[];
 };
 
+const PRIMARY_NAV = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard/tasks", label: "Tasks" },
+  { href: "/dashboard/goals", label: "Goals" },
+  { href: "/dashboard/habits", label: "Habits" },
+  { href: "/dashboard/coach", label: "Coach" },
+  { href: "/dashboard/weekly-review", label: "Weekly Review" },
+];
+
 export default function DashboardPage() {
   const [data, setData] = useState<OrchestratorResult | null>(null);
   const [error, setError] = useState("");
@@ -87,7 +96,9 @@ export default function DashboardPage() {
 
       setMessage(`Executed: ${action.title}`);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Greška pri izvršavanju akcije.");
+      setMessage(
+        err instanceof Error ? err.message : "Greška pri izvršavanju akcije."
+      );
     } finally {
       setBusyAction(null);
     }
@@ -121,7 +132,9 @@ export default function DashboardPage() {
 
       setMessage(`Feedback saved: ${outcome} for "${action.title}"`);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Greška pri čuvanju feedback-a.");
+      setMessage(
+        err instanceof Error ? err.message : "Greška pri čuvanju feedback-a."
+      );
     } finally {
       setBusyAction(null);
     }
@@ -136,6 +149,18 @@ export default function DashboardPage() {
           <p className="mt-3 max-w-3xl text-muted-foreground">
             Tvoj centralni AI operativni ekran za odluke, fokus, rizik i sledeće akcije.
           </p>
+
+          <nav className="mt-6 flex flex-wrap gap-2">
+            {PRIMARY_NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-2xl border px-4 py-2 text-sm hover:bg-muted/40"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         </section>
 
         {loading && (
@@ -187,8 +212,8 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">Today focus</p>
               <div className="mt-4 space-y-3">
                 {data.todayFocus.length > 0 ? (
-                  data.todayFocus.map((item) => (
-                    <div key={item} className="rounded-2xl border p-4">
+                  data.todayFocus.map((item, index) => (
+                    <div key={`${item}-${index}`} className="rounded-2xl border p-4">
                       {item}
                     </div>
                   ))
@@ -255,8 +280,8 @@ export default function DashboardPage() {
 
               <div className="mt-6 space-y-4">
                 {data.actions.length > 0 ? (
-                  data.actions.map((action) => (
-                    <div key={action.title} className="rounded-2xl border p-5">
+                  data.actions.map((action, index) => (
+                    <div key={`${action.title}-${index}`} className="rounded-2xl border p-5">
                       <div className="font-semibold">{action.title}</div>
                       <div className="mt-1 text-sm text-muted-foreground">{action.type}</div>
                       <div className="mt-2">{action.description}</div>
@@ -278,7 +303,9 @@ export default function DashboardPage() {
                           disabled={busyAction !== null}
                           className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                         >
-                          {busyAction === `${action.title}-helpful` ? "Saving..." : "Helpful"}
+                          {busyAction === `${action.title}-helpful`
+                            ? "Saving..."
+                            : "Helpful"}
                         </button>
 
                         <button
@@ -286,7 +313,9 @@ export default function DashboardPage() {
                           disabled={busyAction !== null}
                           className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                         >
-                          {busyAction === `${action.title}-neutral` ? "Saving..." : "Not now"}
+                          {busyAction === `${action.title}-neutral`
+                            ? "Saving..."
+                            : "Not now"}
                         </button>
 
                         <button
@@ -294,7 +323,9 @@ export default function DashboardPage() {
                           disabled={busyAction !== null}
                           className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                         >
-                          {busyAction === `${action.title}-unhelpful` ? "Saving..." : "Not useful"}
+                          {busyAction === `${action.title}-unhelpful`
+                            ? "Saving..."
+                            : "Not useful"}
                         </button>
                       </div>
                     </div>
@@ -310,8 +341,8 @@ export default function DashboardPage() {
             <section className="rounded-3xl border bg-card p-8 shadow-sm">
               <p className="text-sm text-muted-foreground">System reasoning</p>
               <div className="mt-4 space-y-3">
-                {data.reasoning.map((item) => (
-                  <div key={item} className="rounded-2xl border p-4">
+                {data.reasoning.map((item, index) => (
+                  <div key={`${item}-${index}`} className="rounded-2xl border p-4">
                     {item}
                   </div>
                 ))}
@@ -319,31 +350,61 @@ export default function DashboardPage() {
             </section>
 
             <section className="rounded-3xl border bg-card p-8 shadow-sm">
-              <p className="text-sm text-muted-foreground">OS navigation</p>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Advanced</p>
+                  <h3 className="mt-2 text-2xl font-semibold">System tools</h3>
+                </div>
+              </div>
+
               <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <Link href="/dashboard/tasks" className="rounded-2xl border p-4 hover:bg-muted/40">
-                  Tasks
-                </Link>
-                <Link href="/dashboard/goals" className="rounded-2xl border p-4 hover:bg-muted/40">
-                  Goals
-                </Link>
-                <Link href="/dashboard/habits" className="rounded-2xl border p-4 hover:bg-muted/40">
-                  Habits
-                </Link>
-                <Link href="/dashboard/energy" className="rounded-2xl border p-4 hover:bg-muted/40">
+                <Link
+                  href="/dashboard/energy"
+                  className="rounded-2xl border p-4 hover:bg-muted/40"
+                >
                   Energy
                 </Link>
-                <Link href="/dashboard/decision" className="rounded-2xl border p-4 hover:bg-muted/40">
+                <Link
+                  href="/dashboard/decision"
+                  className="rounded-2xl border p-4 hover:bg-muted/40"
+                >
                   Decision
                 </Link>
-                <Link href="/dashboard/executive" className="rounded-2xl border p-4 hover:bg-muted/40">
+                <Link
+                  href="/dashboard/executive"
+                  className="rounded-2xl border p-4 hover:bg-muted/40"
+                >
                   Executive
                 </Link>
-                <Link href="/dashboard/review" className="rounded-2xl border p-4 hover:bg-muted/40">
+                <Link
+                  href="/dashboard/review"
+                  className="rounded-2xl border p-4 hover:bg-muted/40"
+                >
                   Review
                 </Link>
-                <Link href="/dashboard/policy" className="rounded-2xl border p-4 hover:bg-muted/40">
+                <Link
+                  href="/dashboard/policy"
+                  className="rounded-2xl border p-4 hover:bg-muted/40"
+                >
                   Policy
+                </Link>
+                <Link
+                  href="/dashboard/trends"
+                  className="rounded-2xl border p-4 hover:bg-muted/40"
+                >
+                  Trends
+                </Link>
+                <Link
+                  href="/dashboard/retrospective"
+                  className="rounded-2xl border p-4 hover:bg-muted/40"
+                >
+                  Retrospective
+                </Link>
+                <Link
+                  href="/dashboard/state"
+                  className="rounded-2xl border p-4 hover:bg-muted/40"
+                >
+                  State
                 </Link>
               </div>
             </section>
