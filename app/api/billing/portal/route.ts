@@ -1,18 +1,59 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { requireUser } from '@/lib/session';
-import { stripe } from '@/lib/stripe';
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { stripe } from "@/lib/stripe";
 
 export async function POST() {
-  const authResult = await requireUser();
-  if ('error' in authResult) return authResult.error;
-  const user = await db.user.findUnique({ where: { id: authResult.userId } });
-  if (!user?.stripeCustomerId) return NextResponse.json({ error: 'Stripe customer ne postoji.' }, { status: 400 });
+  try {
+    if (!stripe) {
+      return NextResponse.json(
+        { error: "Stripe is not configured." },
+        { status: 500 }
+      );
+    }
 
-  const session = await stripe.billingPortal.sessions.create({
-    customer: user.stripeCustomerId,
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`
-  });
+    const session = await auth();
 
-  return NextResponse.json({ url: session.url });
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!user?.stripeCustomerId) {
+      return NextResponse.json(
+        { error: "Stripe customer not found." },
+        { status: 404 }
+      );
+    }
+
+    if (!process.env.NEXT_PUBLIC_APP_URL) {
+      return NextResponse.json(
+        { error: "NEXT_PUBLIC_APP_URL is not configured." },
+        { status: 500 }
+      );
+    }
+
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
+    });
+
+    return NextResponse.json({ url: portalSession.url });
+  } catch (error) {
+    console.error("POST /api/billing/portal error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Billing portal failed",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }
