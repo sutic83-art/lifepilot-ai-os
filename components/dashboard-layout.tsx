@@ -30,6 +30,9 @@ export function DashboardLayout({
             Your AI operating system
           </div>
 
+          <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Main
+          </div>
           <nav className="flex flex-col gap-2">
             {primaryLinks.map(([label, href]) => (
               <Link
