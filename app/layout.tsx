@@ -16,8 +16,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-      <I18nProvider>
-      {children}
+        <I18nProvider>
+          {children}
           <Analytics />
         </I18nProvider>
       </body>
