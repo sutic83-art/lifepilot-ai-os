@@ -4,14 +4,11 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { useI18n } from "@/lib/i18n/context";
-import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
 function SignInContent() {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params?.get("callbackUrl") || "/dashboard";
-  const { t } = useI18n();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,19 +30,19 @@ function SignInContent() {
       });
 
       if (!result) {
-        setError(t.auth.signInFailed);
+        setError("Sign in failed.");
         return;
       }
 
       if (result.error) {
-        setError(t.auth.invalidCredentials);
+        setError("Invalid email or password.");
         return;
       }
 
       router.push(result.url || callbackUrl);
       router.refresh();
     } catch {
-      setError(t.auth.signInFailed);
+      setError("Sign in failed.");
     } finally {
       setLoading(false);
     }
@@ -54,23 +51,16 @@ function SignInContent() {
   return (
     <main className="min-h-screen p-6 md:p-10">
       <div className="mx-auto max-w-md space-y-6 rounded-3xl border p-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {t.auth.signInTitle}
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              {t.auth.signInDescription}
-            </p>
-          </div>
-          <LanguageSwitcher />
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Sign in</h1>
+          <p className="mt-2 text-muted-foreground">
+            Sign in to your LifePilot account.
+          </p>
         </div>
 
         <form onSubmit={handleSignIn} className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              {t.auth.email}
-            </label>
+            <label className="mb-2 block text-sm font-medium">Email</label>
             <input
               type="email"
               value={email}
@@ -82,9 +72,7 @@ function SignInContent() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              {t.auth.password}
-            </label>
+            <label className="mb-2 block text-sm font-medium">Password</label>
             <input
               type="password"
               value={password}
@@ -100,7 +88,7 @@ function SignInContent() {
             disabled={loading}
             className="w-full rounded-2xl bg-black px-6 py-3 text-white disabled:opacity-50"
           >
-            {loading ? t.auth.loadingSignIn : t.auth.signInButton}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
@@ -111,9 +99,9 @@ function SignInContent() {
         )}
 
         <div className="text-sm text-muted-foreground">
-          {t.auth.noAccount}{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/auth/signup" className="font-medium text-black underline">
-            {t.auth.goToSignUp}
+            Create account
           </Link>
         </div>
       </div>

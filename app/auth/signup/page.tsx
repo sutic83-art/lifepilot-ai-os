@@ -3,12 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useI18n } from "@/lib/i18n/context";
-import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { t } = useI18n();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,12 +31,12 @@ export default function SignUpPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || t.auth.signUpFailed);
+        throw new Error(data.error || "Sign up failed.");
       }
 
       router.push("/auth/signin");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.auth.signUpFailed);
+      setError(err instanceof Error ? err.message : "Sign up failed.");
     } finally {
       setLoading(false);
     }
@@ -48,23 +45,16 @@ export default function SignUpPage() {
   return (
     <main className="min-h-screen p-6 md:p-10">
       <div className="mx-auto max-w-md space-y-6 rounded-3xl border p-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {t.auth.signUpTitle}
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              {t.auth.signUpDescription}
-            </p>
-          </div>
-          <LanguageSwitcher />
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Create account</h1>
+          <p className="mt-2 text-muted-foreground">
+            Create your LifePilot account.
+          </p>
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              {t.auth.name}
-            </label>
+            <label className="mb-2 block text-sm font-medium">Name</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -74,9 +64,7 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              {t.auth.email}
-            </label>
+            <label className="mb-2 block text-sm font-medium">Email</label>
             <input
               type="email"
               value={email}
@@ -88,9 +76,7 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              {t.auth.password}
-            </label>
+            <label className="mb-2 block text-sm font-medium">Password</label>
             <input
               type="password"
               value={password}
@@ -106,7 +92,7 @@ export default function SignUpPage() {
             disabled={loading}
             className="w-full rounded-2xl bg-black px-6 py-3 text-white disabled:opacity-50"
           >
-            {loading ? t.auth.loadingSignUp : t.auth.signUpButton}
+            {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
@@ -117,9 +103,9 @@ export default function SignUpPage() {
         )}
 
         <div className="text-sm text-muted-foreground">
-          {t.auth.alreadyHaveAccount}{" "}
+          Already have an account?{" "}
           <Link href="/auth/signin" className="font-medium text-black underline">
-            {t.auth.goToSignIn}
+            Go to sign in
           </Link>
         </div>
       </div>
