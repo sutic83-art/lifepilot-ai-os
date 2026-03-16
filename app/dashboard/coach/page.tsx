@@ -74,7 +74,7 @@ export default function CoachPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, locale }),
       });
 
       const data = await res.json();
