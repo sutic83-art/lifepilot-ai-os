@@ -98,7 +98,7 @@ export function SignInForm({ callbackUrl }: { callbackUrl: string }) {
 
         <div className="text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <Link href="/auth/signup" className="font-medium text-black underline">
+          <Link href="/signup" className="font-medium text-black underline">
             Create account
           </Link>
         </div>

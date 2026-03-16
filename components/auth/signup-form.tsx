@@ -104,7 +104,7 @@ export function SignUpForm() {
 
         <div className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/auth/signin" className="font-medium text-black underline">
+          <Link href="/signin" className="font-medium text-black underline">
             Go to sign in
           </Link>
         </div>
