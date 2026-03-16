@@ -27,7 +27,7 @@ async function handleRequest(locale: SupportedLocale) {
       );
     }
 
-    const insights = await analyzeUserBehavior(session.user.id);
+    const insights = await analyzeUserBehavior(session.user.id, locale);
     const localizedInsights = localizeInsights(insights, locale);
 
     return NextResponse.json(localizedInsights);

@@ -27,7 +27,7 @@ async function handleRequest(locale: SupportedLocale) {
       );
     }
 
-    const result = await generateUnifiedOrchestrator(session.user.id);
+    const result = await generateUnifiedOrchestrator(session.user.id, locale);
     const localizedResult = localizeOrchestratorResult(result, locale);
 
     return NextResponse.json(localizedResult);
