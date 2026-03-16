@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n/context";
 
 type Habit = {
   id: string;
@@ -21,6 +22,8 @@ const initialForm: HabitFormState = {
 };
 
 export default function HabitsPage() {
+  const { t, locale } = useI18n();
+
   const [habits, setHabits] = useState<Habit[]>([]);
   const [form, setForm] = useState<HabitFormState>(initialForm);
   const [loading, setLoading] = useState(true);
@@ -43,7 +46,7 @@ export default function HabitsPage() {
 
       setHabits(Array.isArray(json) ? json : []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri učitavanju navika.");
+      setError(err instanceof Error ? err.message : "Error loading habits.");
     } finally {
       setLoading(false);
     }
@@ -81,10 +84,10 @@ export default function HabitsPage() {
       }
 
       setForm(initialForm);
-      setMessage("Habit added successfully.");
+      setMessage(t.habitsPage.habitAdded);
       await loadHabits();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri kreiranju navike.");
+      setError(err instanceof Error ? err.message : "Habit creation failed.");
     } finally {
       setSaving(false);
     }
@@ -115,7 +118,7 @@ export default function HabitsPage() {
 
       await loadHabits();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri ažuriranju navike.");
+      setError(err instanceof Error ? err.message : "Habit update failed.");
     } finally {
       setBusyId(null);
     }
@@ -137,10 +140,10 @@ export default function HabitsPage() {
         throw new Error(json.error || "Habit delete failed.");
       }
 
-      setMessage("Habit deleted.");
+      setMessage(t.habitsPage.habitDeleted);
       await loadHabits();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri brisanju navike.");
+      setError(err instanceof Error ? err.message : "Habit delete failed.");
     } finally {
       setBusyId(null);
     }
@@ -154,27 +157,32 @@ export default function HabitsPage() {
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">Habits</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Habit Tracker</h1>
+        <p className="text-sm text-muted-foreground">{t.nav.habits}</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+          {t.habitsPage.title}
+        </h1>
         <p className="mt-3 max-w-3xl text-muted-foreground">
-          Prati rutine, jačaj kontinuitet i održavaj dnevni ritam koji podržava
-          stabilan napredak.
+          {t.habitsPage.subtitle}
         </p>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">Total habits</p>
+          <p className="text-sm text-muted-foreground">{t.habitsPage.total}</p>
           <h2 className="mt-2 text-2xl font-semibold">{habits.length}</h2>
         </div>
 
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">Best streak</p>
+          <p className="text-sm text-muted-foreground">
+            {t.habitsPage.bestStreak}
+          </p>
           <h2 className="mt-2 text-2xl font-semibold">{bestStreak}</h2>
         </div>
 
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">Great / warning</p>
+          <p className="text-sm text-muted-foreground">
+            {t.habitsPage.greatWarning}
+          </p>
           <h2 className="mt-2 text-2xl font-semibold">
             {greatHabits} / {warningHabits}
           </h2>
@@ -194,23 +202,29 @@ export default function HabitsPage() {
       )}
 
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">Add habit</p>
-        <h2 className="mt-2 text-2xl font-semibold">Create a new habit</h2>
+        <p className="text-sm text-muted-foreground">{t.habitsPage.addHabit}</p>
+        <h2 className="mt-2 text-2xl font-semibold">
+          {t.habitsPage.createHabit}
+        </h2>
 
         <form onSubmit={createHabit} className="mt-6 grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium">Title</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.habitsPage.titleLabel}
+            </label>
             <input
               value={form.title}
               onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
               className="w-full rounded-2xl border px-4 py-3"
-              placeholder="Enter habit title"
+              placeholder={t.habitsPage.titleLabel}
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Frequency</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.habitsPage.frequencyLabel}
+            </label>
             <select
               value={form.frequency}
               onChange={(e) =>
@@ -218,9 +232,9 @@ export default function HabitsPage() {
               }
               className="w-full rounded-2xl border px-4 py-3"
             >
-              <option value="daily">daily</option>
-              <option value="weekly">weekly</option>
-              <option value="custom">custom</option>
+              <option value="daily">{locale === "sr" ? "dnevno" : "daily"}</option>
+              <option value="weekly">{locale === "sr" ? "nedeljno" : "weekly"}</option>
+              <option value="custom">{locale === "sr" ? "prilagođeno" : "custom"}</option>
             </select>
           </div>
 
@@ -230,18 +244,20 @@ export default function HabitsPage() {
               disabled={saving || !form.title.trim()}
               className="rounded-2xl bg-black px-6 py-3 text-white disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Add habit"}
+              {saving ? t.habitsPage.saving : t.habitsPage.addButton}
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">Habit list</p>
-        <h2 className="mt-2 text-2xl font-semibold">Current habits</h2>
+        <p className="text-sm text-muted-foreground">{t.nav.habits}</p>
+        <h2 className="mt-2 text-2xl font-semibold">{t.habitsPage.habitList}</h2>
 
         {loading ? (
-          <div className="mt-6 rounded-2xl border p-4">Učitavanje navika...</div>
+          <div className="mt-6 rounded-2xl border p-4">
+            {t.habitsPage.loading}
+          </div>
         ) : (
           <div className="mt-6 space-y-4">
             {habits.length > 0 ? (
@@ -255,7 +271,7 @@ export default function HabitsPage() {
                           {habit.frequency}
                         </span>
                         <span className="rounded-full border px-2 py-1 text-xs">
-                          streak: {habit.streak}
+                          {locale === "sr" ? "niz" : "streak"}: {habit.streak}
                         </span>
                         <span className="rounded-full border px-2 py-1 text-xs">
                           {habit.status}
@@ -273,7 +289,7 @@ export default function HabitsPage() {
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === habit.id ? "Saving..." : "-1 streak"}
+                        {busyId === habit.id ? t.habitsPage.saving : "-1"}
                       </button>
 
                       <button
@@ -285,43 +301,31 @@ export default function HabitsPage() {
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === habit.id ? "Saving..." : "+1 streak"}
+                        {busyId === habit.id ? t.habitsPage.saving : "+1"}
                       </button>
 
                       <button
-                        onClick={() =>
-                          updateHabit(habit, {
-                            status: "GOOD",
-                          })
-                        }
+                        onClick={() => updateHabit(habit, { status: "GOOD" })}
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === habit.id ? "Saving..." : "GOOD"}
+                        {busyId === habit.id ? t.habitsPage.saving : "GOOD"}
                       </button>
 
                       <button
-                        onClick={() =>
-                          updateHabit(habit, {
-                            status: "GREAT",
-                          })
-                        }
+                        onClick={() => updateHabit(habit, { status: "GREAT" })}
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === habit.id ? "Saving..." : "GREAT"}
+                        {busyId === habit.id ? t.habitsPage.saving : "GREAT"}
                       </button>
 
                       <button
-                        onClick={() =>
-                          updateHabit(habit, {
-                            status: "WARNING",
-                          })
-                        }
+                        onClick={() => updateHabit(habit, { status: "WARNING" })}
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === habit.id ? "Saving..." : "WARNING"}
+                        {busyId === habit.id ? t.habitsPage.saving : "WARNING"}
                       </button>
 
                       <button
@@ -329,7 +333,11 @@ export default function HabitsPage() {
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === habit.id ? "Working..." : "Delete"}
+                        {busyId === habit.id
+                          ? locale === "sr"
+                            ? "Radim..."
+                            : "Working..."
+                          : t.habitsPage.delete}
                       </button>
                     </div>
                   </div>
@@ -337,7 +345,7 @@ export default function HabitsPage() {
               ))
             ) : (
               <div className="rounded-2xl border p-4">
-                Nema navika. Dodaj prvu naviku iz forme iznad.
+                {t.habitsPage.noHabits}
               </div>
             )}
           </div>

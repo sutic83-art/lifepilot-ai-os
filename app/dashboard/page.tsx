@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n/context";
 
 type OrchestratorAction = {
   type: string;
@@ -36,6 +37,8 @@ type OrchestratorResult = {
 };
 
 export default function DashboardPage() {
+  const { t, locale } = useI18n();
+
   const [data, setData] = useState<OrchestratorResult | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,7 +50,14 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
 
-      const res = await fetch("/api/ai/orchestrator");
+      const res = await fetch("/api/ai/orchestrator", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ locale }),
+      });
+
       const json = await res.json();
 
       if (!res.ok) {
@@ -56,7 +66,7 @@ export default function DashboardPage() {
 
       setData(json);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška.");
+      setError(err instanceof Error ? err.message : "Error.");
     } finally {
       setLoading(false);
     }
@@ -64,7 +74,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [locale]);
 
   const executeAction = async (action: OrchestratorAction) => {
     try {
@@ -76,7 +86,7 @@ export default function DashboardPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(action),
+        body: JSON.stringify({ ...action, locale }),
       });
 
       const json = await res.json();
@@ -85,11 +95,9 @@ export default function DashboardPage() {
         throw new Error(json.error || "Action execution failed.");
       }
 
-      setMessage(`Executed: ${action.title}`);
+      setMessage(`${t.dashboard.executed}: ${action.title}`);
     } catch (err) {
-      setMessage(
-        err instanceof Error ? err.message : "Greška pri izvršavanju akcije."
-      );
+      setMessage(err instanceof Error ? err.message : "Error.");
     } finally {
       setBusyAction(null);
     }
@@ -111,7 +119,11 @@ export default function DashboardPage() {
         body: JSON.stringify({
           actionType: action.type,
           outcome,
-          note: `Feedback from Today OS Screen for action: ${action.title}`,
+          locale,
+          note:
+            locale === "sr"
+              ? `Feedback sa Today OS ekrana za akciju: ${action.title}`
+              : `Feedback from Today OS Screen for action: ${action.title}`,
         }),
       });
 
@@ -121,11 +133,9 @@ export default function DashboardPage() {
         throw new Error(json.error || "Feedback save failed.");
       }
 
-      setMessage(`Feedback saved: ${outcome} for "${action.title}"`);
+      setMessage(`${t.dashboard.feedbackSaved}: "${action.title}"`);
     } catch (err) {
-      setMessage(
-        err instanceof Error ? err.message : "Greška pri čuvanju feedback-a."
-      );
+      setMessage(err instanceof Error ? err.message : "Error.");
     } finally {
       setBusyAction(null);
     }
@@ -136,16 +146,17 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <section className="rounded-3xl border bg-card p-8 shadow-sm">
           <p className="text-sm text-muted-foreground">LifePilot OS</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight">Today</h1>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight">
+            {t.dashboard.title}
+          </h1>
           <p className="mt-3 max-w-3xl text-muted-foreground">
-            Tvoj centralni AI operativni ekran za odluke, fokus, rizik i sledeće
-            akcije.
+            {t.dashboard.subtitle}
           </p>
         </section>
 
         {loading && (
           <section className="rounded-3xl border p-6">
-            Učitavanje Today OS Screen-a...
+            {t.dashboard.loading}
           </section>
         )}
 
@@ -156,40 +167,57 @@ export default function DashboardPage() {
         )}
 
         {message && (
-          <section className="rounded-3xl border p-4 text-sm">{message}</section>
+          <section className="rounded-3xl border p-4 text-sm">
+            {message}
+          </section>
         )}
 
         {!loading && !error && data && (
           <>
             <section className="rounded-3xl border bg-card p-8 shadow-sm">
-              <p className="text-sm text-muted-foreground">System summary</p>
+              <p className="text-sm text-muted-foreground">
+                {t.dashboard.systemSummary}
+              </p>
               <h2 className="mt-2 text-2xl font-semibold">{data.summary}</h2>
               <div className="mt-4 rounded-2xl border p-4">
-                <span className="font-medium">Major risk:</span> {data.majorRisk}
+                <span className="font-medium">{t.dashboard.majorRisk}:</span>{" "}
+                {data.majorRisk}
               </div>
             </section>
 
             <section className="grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl border bg-card p-6 shadow-sm">
-                <p className="text-sm text-muted-foreground">Executive mode</p>
+                <p className="text-sm text-muted-foreground">
+                  {t.dashboard.executiveMode}
+                </p>
                 <h3 className="mt-2 text-xl font-semibold">
                   {data.executiveMode}
                 </h3>
               </div>
 
               <div className="rounded-3xl border bg-card p-6 shadow-sm">
-                <p className="text-sm text-muted-foreground">Energy</p>
-                <h3 className="mt-2 text-xl font-semibold">{data.energyLevel}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {t.dashboard.energy}
+                </p>
+                <h3 className="mt-2 text-xl font-semibold">
+                  {data.energyLevel}
+                </h3>
               </div>
 
               <div className="rounded-3xl border bg-card p-6 shadow-sm">
-                <p className="text-sm text-muted-foreground">Burnout risk</p>
-                <h3 className="mt-2 text-xl font-semibold">{data.burnoutRisk}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {t.dashboard.burnoutRisk}
+                </p>
+                <h3 className="mt-2 text-xl font-semibold">
+                  {data.burnoutRisk}
+                </h3>
               </div>
             </section>
 
             <section className="rounded-3xl border bg-card p-8 shadow-sm">
-              <p className="text-sm text-muted-foreground">Today focus</p>
+              <p className="text-sm text-muted-foreground">
+                {t.dashboard.todayFocus}
+              </p>
               <div className="mt-4 space-y-3">
                 {data.todayFocus.length > 0 ? (
                   data.todayFocus.map((item, index) => (
@@ -202,7 +230,7 @@ export default function DashboardPage() {
                   ))
                 ) : (
                   <div className="rounded-2xl border p-4">
-                    Nema definisanog fokusa za danas.
+                    {t.dashboard.noFocus}
                   </div>
                 )}
               </div>
@@ -210,44 +238,73 @@ export default function DashboardPage() {
 
             <section className="grid gap-6 lg:grid-cols-2">
               <div className="rounded-3xl border bg-card p-8 shadow-sm">
-                <p className="text-sm text-muted-foreground">Decision</p>
+                <p className="text-sm text-muted-foreground">
+                  {t.dashboard.decision}
+                </p>
                 <div className="mt-4 space-y-3">
                   <div className="rounded-2xl border p-4">
-                    <span className="font-medium">Strategy:</span>{" "}
+                    <span className="font-medium">
+                      {locale === "sr" ? "Strategija" : "Strategy"}:
+                    </span>{" "}
                     {data.decision.strategy}
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <span className="font-medium">Primary action:</span>{" "}
+                    <span className="font-medium">
+                      {locale === "sr" ? "Primarna akcija" : "Primary action"}:
+                    </span>{" "}
                     {data.decision.primaryAction}
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <span className="font-medium">Secondary action:</span>{" "}
+                    <span className="font-medium">
+                      {locale === "sr"
+                        ? "Sekundarna akcija"
+                        : "Secondary action"}
+                      :
+                    </span>{" "}
                     {data.decision.secondaryAction}
                   </div>
                 </div>
               </div>
 
               <div className="rounded-3xl border bg-card p-8 shadow-sm">
-                <p className="text-sm text-muted-foreground">Policy & learning</p>
+                <p className="text-sm text-muted-foreground">
+                  {t.dashboard.policyLearning}
+                </p>
                 <div className="mt-4 space-y-3">
                   <div className="rounded-2xl border p-4">
-                    <span className="font-medium">Profile:</span>{" "}
+                    <span className="font-medium">
+                      {locale === "sr" ? "Profil" : "Profile"}:
+                    </span>{" "}
                     {data.policy.profile}
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <span className="font-medium">Planning intensity:</span>{" "}
+                    <span className="font-medium">
+                      {locale === "sr"
+                        ? "Intenzitet planiranja"
+                        : "Planning intensity"}
+                      :
+                    </span>{" "}
                     {data.policy.planningIntensity}
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <span className="font-medium">Intervention style:</span>{" "}
+                    <span className="font-medium">
+                      {locale === "sr"
+                        ? "Stil intervencije"
+                        : "Intervention style"}
+                      :
+                    </span>{" "}
                     {data.policy.interventionStyle}
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <span className="font-medium">Learning:</span>{" "}
+                    <span className="font-medium">
+                      {locale === "sr" ? "Učenje" : "Learning"}:
+                    </span>{" "}
                     {data.learning.summary}
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <span className="font-medium">Top pattern:</span>{" "}
+                    <span className="font-medium">
+                      {locale === "sr" ? "Glavni obrazac" : "Top pattern"}:
+                    </span>{" "}
                     {data.learning.topPattern}
                   </div>
                 </div>
@@ -258,10 +315,12 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Action proposals
+                    {t.dashboard.actionProposals}
                   </p>
                   <h3 className="mt-2 text-2xl font-semibold">
-                    Recommended system actions
+                    {locale === "sr"
+                      ? "Preporučene sistemske akcije"
+                      : "Recommended system actions"}
                   </h3>
                 </div>
 
@@ -269,7 +328,7 @@ export default function DashboardPage() {
                   href="/dashboard/actions"
                   className="rounded-2xl border px-4 py-2 text-sm font-medium hover:bg-muted/40"
                 >
-                  Open full Actions
+                  {t.dashboard.openFullActions}
                 </Link>
               </div>
 
@@ -286,7 +345,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="mt-2">{action.description}</div>
                       <div className="mt-2 text-sm text-muted-foreground">
-                        Reason: {action.reason}
+                        {locale === "sr" ? "Razlog" : "Reason"}: {action.reason}
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-3">
@@ -296,8 +355,8 @@ export default function DashboardPage() {
                           className="rounded-2xl bg-black px-4 py-2 text-white disabled:opacity-50"
                         >
                           {busyAction === action.title
-                            ? "Executing..."
-                            : "Execute"}
+                            ? t.dashboard.executing
+                            : t.dashboard.execute}
                         </button>
 
                         <button
@@ -306,8 +365,8 @@ export default function DashboardPage() {
                           className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                         >
                           {busyAction === `${action.title}-helpful`
-                            ? "Saving..."
-                            : "Helpful"}
+                            ? t.dashboard.saving
+                            : t.dashboard.helpful}
                         </button>
 
                         <button
@@ -316,8 +375,8 @@ export default function DashboardPage() {
                           className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                         >
                           {busyAction === `${action.title}-neutral`
-                            ? "Saving..."
-                            : "Not now"}
+                            ? t.dashboard.saving
+                            : t.dashboard.notNow}
                         </button>
 
                         <button
@@ -326,22 +385,24 @@ export default function DashboardPage() {
                           className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                         >
                           {busyAction === `${action.title}-unhelpful`
-                            ? "Saving..."
-                            : "Not useful"}
+                            ? t.dashboard.saving
+                            : t.dashboard.notUseful}
                         </button>
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="rounded-2xl border p-4">
-                    Nema novih preporučenih akcija.
+                    {t.dashboard.noActions}
                   </div>
                 )}
               </div>
             </section>
 
             <section className="rounded-3xl border bg-card p-8 shadow-sm">
-              <p className="text-sm text-muted-foreground">System reasoning</p>
+              <p className="text-sm text-muted-foreground">
+                {t.dashboard.reasoning}
+              </p>
               <div className="mt-4 space-y-3">
                 {data.reasoning.map((item, index) => (
                   <div
@@ -357,8 +418,12 @@ export default function DashboardPage() {
             <section className="rounded-3xl border bg-card p-8 shadow-sm">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Advanced</p>
-                  <h3 className="mt-2 text-2xl font-semibold">System tools</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t.dashboard.advanced}
+                  </p>
+                  <h3 className="mt-2 text-2xl font-semibold">
+                    {t.dashboard.systemTools}
+                  </h3>
                 </div>
               </div>
 
@@ -367,49 +432,49 @@ export default function DashboardPage() {
                   href="/dashboard/energy"
                   className="rounded-2xl border p-4 hover:bg-muted/40"
                 >
-                  Energy
+                  {locale === "sr" ? "Energija" : "Energy"}
                 </Link>
                 <Link
                   href="/dashboard/decision"
                   className="rounded-2xl border p-4 hover:bg-muted/40"
                 >
-                  Decision
+                  {locale === "sr" ? "Odluka" : "Decision"}
                 </Link>
                 <Link
                   href="/dashboard/executive"
                   className="rounded-2xl border p-4 hover:bg-muted/40"
                 >
-                  Executive
+                  {locale === "sr" ? "Izvršno" : "Executive"}
                 </Link>
                 <Link
                   href="/dashboard/review"
                   className="rounded-2xl border p-4 hover:bg-muted/40"
                 >
-                  Review
+                  {locale === "sr" ? "Pregled" : "Review"}
                 </Link>
                 <Link
                   href="/dashboard/policy"
                   className="rounded-2xl border p-4 hover:bg-muted/40"
                 >
-                  Policy
+                  {locale === "sr" ? "Politika" : "Policy"}
                 </Link>
                 <Link
                   href="/dashboard/trends"
                   className="rounded-2xl border p-4 hover:bg-muted/40"
                 >
-                  Trends
+                  {locale === "sr" ? "Trendovi" : "Trends"}
                 </Link>
                 <Link
                   href="/dashboard/retrospective"
                   className="rounded-2xl border p-4 hover:bg-muted/40"
                 >
-                  Retrospective
+                  {locale === "sr" ? "Retrospektiva" : "Retrospective"}
                 </Link>
                 <Link
                   href="/dashboard/state"
                   className="rounded-2xl border p-4 hover:bg-muted/40"
                 >
-                  State
+                  {locale === "sr" ? "Stanje" : "State"}
                 </Link>
               </div>
             </section>

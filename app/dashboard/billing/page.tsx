@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/lib/i18n/context";
 
 export default function BillingPage() {
+  const { t } = useI18n();
+
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -27,7 +30,7 @@ export default function BillingPage() {
 
       setMessage("Request completed, but no redirect URL was returned.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri billing akciji.");
+      setError(err instanceof Error ? err.message : "Billing action failed.");
     } finally {
       setLoading(null);
     }
@@ -36,10 +39,12 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">Billing</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Subscription & billing</h1>
+        <p className="text-sm text-muted-foreground">{t.nav.billing}</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+          {t.billingPage.title}
+        </h1>
         <p className="mt-3 max-w-3xl text-muted-foreground">
-          Upravljaj pretplatom, pokreni checkout i otvori Stripe billing portal.
+          {t.billingPage.subtitle}
         </p>
       </section>
 
@@ -56,8 +61,10 @@ export default function BillingPage() {
       )}
 
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">Plan actions</p>
-        <h2 className="mt-2 text-2xl font-semibold">Manage your plan</h2>
+        <p className="text-sm text-muted-foreground">{t.billingPage.actions}</p>
+        <h2 className="mt-2 text-2xl font-semibold">
+          {t.billingPage.managePlan}
+        </h2>
 
         <div className="mt-6 flex flex-wrap gap-3">
           <button
@@ -65,7 +72,9 @@ export default function BillingPage() {
             onClick={() => go("/api/billing/checkout", "checkout")}
             disabled={loading !== null}
           >
-            {loading === "checkout" ? "Otvaram..." : "Upgrade na Pro"}
+            {loading === "checkout"
+              ? t.billingPage.opening
+              : t.billingPage.upgrade}
           </button>
 
           <button
@@ -73,7 +82,9 @@ export default function BillingPage() {
             onClick={() => go("/api/billing/portal", "portal")}
             disabled={loading !== null}
           >
-            {loading === "portal" ? "Otvaram..." : "Billing portal"}
+            {loading === "portal"
+              ? t.billingPage.opening
+              : t.billingPage.portal}
           </button>
         </div>
       </section>

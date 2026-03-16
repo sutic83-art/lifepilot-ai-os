@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n/context";
 
 type JournalEntry = {
   id: string;
@@ -23,6 +24,8 @@ const initialForm: JournalFormState = {
 };
 
 export default function JournalPage() {
+  const { t, locale } = useI18n();
+
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [form, setForm] = useState<JournalFormState>(initialForm);
   const [loading, setLoading] = useState(true);
@@ -45,9 +48,7 @@ export default function JournalPage() {
 
       setEntries(Array.isArray(json) ? json : []);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Greška pri učitavanju journal-a."
-      );
+      setError(err instanceof Error ? err.message : "Journal load failed.");
     } finally {
       setLoading(false);
     }
@@ -86,12 +87,10 @@ export default function JournalPage() {
       }
 
       setForm(initialForm);
-      setMessage("Journal entry saved.");
+      setMessage(t.journalPage.entrySaved);
       await loadEntries();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Greška pri čuvanju journal entry."
-      );
+      setError(err instanceof Error ? err.message : "Journal save failed.");
     } finally {
       setSaving(false);
     }
@@ -113,12 +112,10 @@ export default function JournalPage() {
         throw new Error(json.error || "Journal delete failed.");
       }
 
-      setMessage("Journal entry deleted.");
+      setMessage(t.journalPage.entryDeleted);
       await loadEntries();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Greška pri brisanju journal entry."
-      );
+      setError(err instanceof Error ? err.message : "Journal delete failed.");
     } finally {
       setBusyId(null);
     }
@@ -127,31 +124,36 @@ export default function JournalPage() {
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">Journal</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Reflection Journal</h1>
+        <p className="text-sm text-muted-foreground">{t.nav.journal}</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+          {t.journalPage.title}
+        </h1>
         <p className="mt-3 max-w-3xl text-muted-foreground">
-          Zabeleži misli, stanje, uvide i dnevne refleksije da bi LifePilot bolje
-          razumeo tvoj ritam i pomagao ti preciznije.
+          {t.journalPage.subtitle}
         </p>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">Entries</p>
+          <p className="text-sm text-muted-foreground">{t.journalPage.entries}</p>
           <h2 className="mt-2 text-2xl font-semibold">{entries.length}</h2>
         </div>
 
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">Latest mood</p>
+          <p className="text-sm text-muted-foreground">
+            {t.journalPage.latestMood}
+          </p>
           <h2 className="mt-2 text-2xl font-semibold">
             {entries[0]?.mood || "—"}
           </h2>
         </div>
 
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">Writing status</p>
+          <p className="text-sm text-muted-foreground">
+            {t.journalPage.writingStatus}
+          </p>
           <h2 className="mt-2 text-2xl font-semibold">
-            {entries.length > 0 ? "Active" : "Empty"}
+            {entries.length > 0 ? t.journalPage.active : t.journalPage.empty}
           </h2>
         </div>
       </section>
@@ -169,37 +171,45 @@ export default function JournalPage() {
       )}
 
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">New entry</p>
-        <h2 className="mt-2 text-2xl font-semibold">Write today’s reflection</h2>
+        <p className="text-sm text-muted-foreground">{t.journalPage.newEntry}</p>
+        <h2 className="mt-2 text-2xl font-semibold">
+          {t.journalPage.writeReflection}
+        </h2>
 
         <form onSubmit={createEntry} className="mt-6 space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium">Title</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.journalPage.titleLabel}
+            </label>
             <input
               value={form.title}
               onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
               className="w-full rounded-2xl border px-4 py-3"
-              placeholder="Optional entry title"
+              placeholder={t.journalPage.titleLabel}
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Mood</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.journalPage.moodLabel}
+            </label>
             <input
               value={form.mood}
               onChange={(e) => setForm((prev) => ({ ...prev, mood: e.target.value }))}
               className="w-full rounded-2xl border px-4 py-3"
-              placeholder="Calm, focused, tired, motivated..."
+              placeholder={t.journalPage.moodLabel}
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Content</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.journalPage.contentLabel}
+            </label>
             <textarea
               value={form.content}
               onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
               className="min-h-40 w-full rounded-2xl border px-4 py-3"
-              placeholder="What happened today? What felt heavy? What worked? What should change tomorrow?"
+              placeholder={t.journalPage.contentLabel}
               required
             />
           </div>
@@ -209,17 +219,21 @@ export default function JournalPage() {
             disabled={saving || !form.content.trim()}
             className="rounded-2xl bg-black px-6 py-3 text-white disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save entry"}
+            {saving ? t.journalPage.saving : t.journalPage.saveEntry}
           </button>
         </form>
       </section>
 
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">History</p>
-        <h2 className="mt-2 text-2xl font-semibold">Recent entries</h2>
+        <p className="text-sm text-muted-foreground">{t.journalPage.history}</p>
+        <h2 className="mt-2 text-2xl font-semibold">
+          {t.journalPage.recentEntries}
+        </h2>
 
         {loading ? (
-          <div className="mt-6 rounded-2xl border p-4">Učitavanje journal unosa...</div>
+          <div className="mt-6 rounded-2xl border p-4">
+            {t.journalPage.loading}
+          </div>
         ) : (
           <div className="mt-6 space-y-4">
             {entries.length > 0 ? (
@@ -229,7 +243,7 @@ export default function JournalPage() {
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-lg font-semibold">
-                          {entry.title || "Untitled entry"}
+                          {entry.title || t.journalPage.untitled}
                         </h3>
                         {entry.mood && (
                           <span className="rounded-full border px-2 py-1 text-xs">
@@ -253,7 +267,13 @@ export default function JournalPage() {
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === entry.id ? "Working..." : "Delete"}
+                        {busyId === entry.id
+                          ? locale === "sr"
+                            ? "Radim..."
+                            : "Working..."
+                          : locale === "sr"
+                          ? "Obriši"
+                          : "Delete"}
                       </button>
                     </div>
                   </div>
@@ -261,7 +281,7 @@ export default function JournalPage() {
               ))
             ) : (
               <div className="rounded-2xl border p-4">
-                Nema journal unosa. Dodaj prvi zapis iz forme iznad.
+                {t.journalPage.noEntries}
               </div>
             )}
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n/context";
 
 type Goal = {
   id: string;
@@ -28,6 +29,8 @@ const initialForm: GoalFormState = {
 };
 
 export default function GoalsPage() {
+  const { t, locale } = useI18n();
+
   const [goals, setGoals] = useState<Goal[]>([]);
   const [form, setForm] = useState<GoalFormState>(initialForm);
   const [loading, setLoading] = useState(true);
@@ -50,7 +53,7 @@ export default function GoalsPage() {
 
       setGoals(Array.isArray(json) ? json : []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri učitavanju ciljeva.");
+      setError(err instanceof Error ? err.message : "Error loading goals.");
     } finally {
       setLoading(false);
     }
@@ -91,10 +94,10 @@ export default function GoalsPage() {
       }
 
       setForm(initialForm);
-      setMessage("Goal added successfully.");
+      setMessage(t.goalsPage.goalAdded);
       await loadGoals();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri kreiranju cilja.");
+      setError(err instanceof Error ? err.message : "Goal creation failed.");
     } finally {
       setSaving(false);
     }
@@ -124,7 +127,7 @@ export default function GoalsPage() {
 
       await loadGoals();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri ažuriranju cilja.");
+      setError(err instanceof Error ? err.message : "Goal update failed.");
     } finally {
       setBusyId(null);
     }
@@ -146,10 +149,10 @@ export default function GoalsPage() {
         throw new Error(json.error || "Goal delete failed.");
       }
 
-      setMessage("Goal deleted.");
+      setMessage(t.goalsPage.goalDeleted);
       await loadGoals();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri brisanju cilja.");
+      setError(err instanceof Error ? err.message : "Goal delete failed.");
     } finally {
       setBusyId(null);
     }
@@ -163,27 +166,32 @@ export default function GoalsPage() {
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">Goals</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Goal Manager</h1>
+        <p className="text-sm text-muted-foreground">{t.nav.goals}</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+          {t.goalsPage.title}
+        </h1>
         <p className="mt-3 max-w-3xl text-muted-foreground">
-          Definiši važne pravce, prati napredak i drži sistem usmeren na ono što
-          zaista donosi rezultat.
+          {t.goalsPage.subtitle}
         </p>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">Total goals</p>
+          <p className="text-sm text-muted-foreground">{t.goalsPage.total}</p>
           <h2 className="mt-2 text-2xl font-semibold">{goals.length}</h2>
         </div>
 
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">Average progress</p>
+          <p className="text-sm text-muted-foreground">
+            {t.goalsPage.averageProgress}
+          </p>
           <h2 className="mt-2 text-2xl font-semibold">{averageProgress}%</h2>
         </div>
 
         <div className="rounded-3xl border bg-card p-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">High traction</p>
+          <p className="text-sm text-muted-foreground">
+            {t.goalsPage.highTraction}
+          </p>
           <h2 className="mt-2 text-2xl font-semibold">
             {goals.filter((goal) => goal.progress >= 70).length}
           </h2>
@@ -203,48 +211,58 @@ export default function GoalsPage() {
       )}
 
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">Add goal</p>
-        <h2 className="mt-2 text-2xl font-semibold">Create a new goal</h2>
+        <p className="text-sm text-muted-foreground">{t.goalsPage.addGoal}</p>
+        <h2 className="mt-2 text-2xl font-semibold">
+          {t.goalsPage.createGoal}
+        </h2>
 
         <form onSubmit={createGoal} className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium">Title</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.goalsPage.titleLabel}
+            </label>
             <input
               value={form.title}
               onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
               className="w-full rounded-2xl border px-4 py-3"
-              placeholder="Enter goal title"
+              placeholder={t.goalsPage.titleLabel}
               required
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium">Description</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.goalsPage.descriptionLabel}
+            </label>
             <textarea
               value={form.description}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, description: e.target.value }))
               }
               className="min-h-28 w-full rounded-2xl border px-4 py-3"
-              placeholder="Optional goal description"
+              placeholder={t.goalsPage.descriptionLabel}
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Area</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.goalsPage.areaLabel}
+            </label>
             <input
               value={form.area}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, area: e.target.value }))
               }
               className="w-full rounded-2xl border px-4 py-3"
-              placeholder="Business, Health, Focus..."
+              placeholder={t.goalsPage.areaLabel}
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Initial progress</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.goalsPage.progressLabel}
+            </label>
             <input
               type="number"
               min={0}
@@ -261,7 +279,9 @@ export default function GoalsPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Target date</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t.goalsPage.targetDateLabel}
+            </label>
             <input
               type="date"
               value={form.targetDate}
@@ -278,18 +298,20 @@ export default function GoalsPage() {
               disabled={saving || !form.title.trim()}
               className="w-full rounded-2xl bg-black px-6 py-3 text-white disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Add goal"}
+              {saving ? t.goalsPage.saving : t.goalsPage.addButton}
             </button>
           </div>
         </form>
       </section>
 
       <section className="rounded-3xl border bg-card p-8 shadow-sm">
-        <p className="text-sm text-muted-foreground">Goal list</p>
-        <h2 className="mt-2 text-2xl font-semibold">Current goals</h2>
+        <p className="text-sm text-muted-foreground">{t.nav.goals}</p>
+        <h2 className="mt-2 text-2xl font-semibold">{t.goalsPage.goalList}</h2>
 
         {loading ? (
-          <div className="mt-6 rounded-2xl border p-4">Učitavanje ciljeva...</div>
+          <div className="mt-6 rounded-2xl border p-4">
+            {t.goalsPage.loading}
+          </div>
         ) : (
           <div className="mt-6 space-y-4">
             {goals.length > 0 ? (
@@ -313,7 +335,8 @@ export default function GoalsPage() {
 
                       {goal.targetDate && (
                         <p className="text-sm text-muted-foreground">
-                          Target: {new Date(goal.targetDate).toLocaleDateString()}
+                          {t.goalsPage.target}:{" "}
+                          {new Date(goal.targetDate).toLocaleDateString()}
                         </p>
                       )}
 
@@ -327,19 +350,23 @@ export default function GoalsPage() {
 
                     <div className="flex flex-wrap gap-3">
                       <button
-                        onClick={() => updateProgress(goal, Math.max(0, goal.progress - 10))}
+                        onClick={() =>
+                          updateProgress(goal, Math.max(0, goal.progress - 10))
+                        }
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === goal.id ? "Saving..." : "-10%"}
+                        {busyId === goal.id ? t.goalsPage.saving : "-10%"}
                       </button>
 
                       <button
-                        onClick={() => updateProgress(goal, Math.min(100, goal.progress + 10))}
+                        onClick={() =>
+                          updateProgress(goal, Math.min(100, goal.progress + 10))
+                        }
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === goal.id ? "Saving..." : "+10%"}
+                        {busyId === goal.id ? t.goalsPage.saving : "+10%"}
                       </button>
 
                       <button
@@ -347,16 +374,18 @@ export default function GoalsPage() {
                         disabled={busyId !== null}
                         className="rounded-2xl border px-4 py-2 disabled:opacity-50"
                       >
-                        {busyId === goal.id ? "Working..." : "Delete"}
+                        {busyId === goal.id
+                          ? locale === "sr"
+                            ? "Radim..."
+                            : "Working..."
+                          : t.goalsPage.delete}
                       </button>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="rounded-2xl border p-4">
-                Nema ciljeva. Dodaj prvi cilj iz forme iznad.
-              </div>
+              <div className="rounded-2xl border p-4">{t.goalsPage.noGoals}</div>
             )}
           </div>
         )}
