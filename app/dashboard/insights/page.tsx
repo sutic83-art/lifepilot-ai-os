@@ -27,13 +27,7 @@ export default function InsightsPage() {
         setLoading(true);
         setError("");
 
-        const res = await fetch("/api/ai/analyze", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ locale }),
-        });
+        const res = await fetch("/api/ai/analyze");
 
         const data = await res.json();
 

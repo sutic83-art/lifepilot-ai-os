@@ -50,13 +50,7 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
 
-      const res = await fetch("/api/ai/orchestrator", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ locale }),
-      });
+      const res = await fetch("/api/ai/orchestrator");
 
       const json = await res.json();
 
